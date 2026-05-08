@@ -103,7 +103,7 @@ const totalCerdos = camadas.reduce((acc, c) => {
           </h1>
           <p className="text-gray-600">Sistema de control porcino</p>
         </div>
-        <div className="grid grid-cols-2 gap-3 mt-6">
+        <div className="grid grid-cols-2 gap-3 mt-9">
 
   <div className="bg-gray-100 p-3 rounded-xl text-center">
     <p className="text-sm text-gray-600">Camadas</p>
