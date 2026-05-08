@@ -16,6 +16,11 @@ export default function Home() {
   const [corral, setCorral] = useState("");
   const [cantidad, setCantidad] = useState("");
   const [camadas, setCamadas] = useState<any[]>([]);
+  const totalCamadas = camadas.length;
+
+const totalCerdos = camadas.reduce((acc, c) => {
+  return acc + Number(c.cantidad || 0);
+}, 0);
 
   const [editando, setEditando] = useState<any | null>(null);
   const [editCorral, setEditCorral] = useState("");
@@ -98,6 +103,19 @@ export default function Home() {
           </h1>
           <p className="text-gray-600">Sistema de control porcino</p>
         </div>
+        <div className="grid grid-cols-2 gap-3 mt-4">
+
+  <div className="bg-gray-100 p-3 rounded-xl text-center">
+    <p className="text-sm text-gray-600">Camadas</p>
+    <p className="text-2xl font-bold">{totalCamadas}</p>
+  </div>
+
+  <div className="bg-gray-100 p-3 rounded-xl text-center">
+    <p className="text-sm text-gray-600">Cerdos totales</p>
+    <p className="text-2xl font-bold">{totalCerdos}</p>
+  </div>
+
+</div>
 
         {/* FORM */}
         <form
