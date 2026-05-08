@@ -16,6 +16,9 @@ export default function Home() {
   const [cantidad, setCantidad] = useState("");
   const [camadas, setCamadas] = useState<any[]>([]);
 
+  // 📅 llave del día actual
+  const hoyKey = new Date().toISOString().split("T")[0];
+
   // 🔄 obtener datos
   const obtenerCamadas = async () => {
     const querySnapshot = await getDocs(collection(db, "camadas"));
@@ -43,6 +46,7 @@ export default function Home() {
     try {
       await addDoc(collection(db, "camadas"), {
         fechaNacimiento: fecha,
+        fechaKey: new Date(fecha).toISOString().split("T")[0],
         corral,
         cantidad: Number(cantidad),
         createdAt: new Date().toISOString(),
@@ -82,37 +86,16 @@ export default function Home() {
     return { dias, semanas };
   };
 
-  // 📍 HOY (seguro)
-  const esHoy = (fechaNacimiento: any) => {
-    const hoy = new Date().toISOString().split("T")[0];
+  // 📊 CONTADOR HOY
+  const camadasHoy = camadas.filter(
+    (c) => c.fechaKey === hoyKey
+  ).length;
 
-    if (typeof fechaNacimiento === "string") {
-      return fechaNacimiento === hoy;
-    }
-
-    if (fechaNacimiento?.seconds) {
-      const fecha = new Date(fechaNacimiento.seconds * 1000)
-        .toISOString()
-        .split("T")[0];
-
-      return fecha === hoy;
-    }
-
-    return false;
-  };
-
-  // 📊 DASHBOARD
   const totalCamadas = camadas.length;
 
   const totalCerdos = camadas.reduce((acc, c) => {
     return acc + Number(c.cantidad || 0);
   }, 0);
-
-  const hoy = new Date().toISOString().split("T")[0];
-
-  const camadasHoy = camadas.filter((c) => {
-    return c.fechaNacimiento === hoy;
-  }).length;
 
   return (
     <main className="min-h-screen bg-gray-400 p-6 text-black">
@@ -152,7 +135,6 @@ export default function Home() {
 
           <input
             type="date"
-            placeholder="Fecha de nacimiento"
             value={fecha}
             onChange={(e) => setFecha(e.target.value)}
             className="w-full border rounded-xl p-3"
@@ -181,23 +163,6 @@ export default function Home() {
             Guardar camada
           </button>
         </form>
-
-        {/* 📍 PANEL HOY */}
-        <div className="mt-6 p-4 border rounded-xl bg-green-50">
-          <h2 className="text-xl font-bold mb-2">📍 Panel HOY</h2>
-
-          {camadas.filter((c) => esHoy(c.fechaNacimiento)).length === 0 ? (
-            <p>😴 Hoy no hay camadas registradas</p>
-          ) : (
-            camadas
-              .filter((c) => esHoy(c.fechaNacimiento))
-              .map((c) => (
-                <div key={c.id}>
-                  🐷 Corral {c.corral} - {c.cantidad} cerdos
-                </div>
-              ))
-          )}
-        </div>
 
         {/* LISTA */}
         <div className="mt-8">
