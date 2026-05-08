@@ -82,16 +82,14 @@ export default function Home() {
     return { dias, semanas };
   };
 
-  // 📍 FIX REAL Y ROBUSTO PARA HOY
+  // 📍 HOY (seguro)
   const esHoy = (fechaNacimiento: any) => {
     const hoy = new Date().toISOString().split("T")[0];
 
-    // si es string tipo "YYYY-MM-DD"
     if (typeof fechaNacimiento === "string") {
       return fechaNacimiento === hoy;
     }
 
-    // si es Timestamp de Firebase
     if (fechaNacimiento?.seconds) {
       const fecha = new Date(fechaNacimiento.seconds * 1000)
         .toISOString()
@@ -103,17 +101,51 @@ export default function Home() {
     return false;
   };
 
+  // 📊 DASHBOARD
+  const totalCamadas = camadas.length;
+
+  const totalCerdos = camadas.reduce((acc, c) => {
+    return acc + Number(c.cantidad || 0);
+  }, 0);
+
+  const hoy = new Date().toISOString().split("T")[0];
+
+  const camadasHoy = camadas.filter((c) => {
+    return c.fechaNacimiento === hoy;
+  }).length;
+
   return (
     <main className="min-h-screen bg-gray-400 p-6 text-black">
       <div className="max-w-2xl mx-auto bg-white p-6 rounded-2xl shadow-xl border border-gray-300">
 
+        {/* TÍTULO */}
         <h1 className="text-4xl font-bold mb-2">
           🐷 Granja Topoyanes
         </h1>
 
-        <p className="mb-6 text-gray-900">
+        <p className="mb-4 text-gray-900">
           Sistema de control porcino
         </p>
+
+        {/* 📊 DASHBOARD */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+
+          <div className="bg-gray-100 p-3 rounded-xl text-center">
+            <p className="text-sm">Camadas</p>
+            <p className="text-xl font-bold">{totalCamadas}</p>
+          </div>
+
+          <div className="bg-gray-100 p-3 rounded-xl text-center">
+            <p className="text-sm">Cerdos</p>
+            <p className="text-xl font-bold">{totalCerdos}</p>
+          </div>
+
+          <div className="bg-gray-100 p-3 rounded-xl text-center">
+            <p className="text-sm">Hoy</p>
+            <p className="text-xl font-bold">{camadasHoy}</p>
+          </div>
+
+        </div>
 
         {/* FORMULARIO */}
         <form onSubmit={guardarCamada} className="space-y-4">
@@ -166,7 +198,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* LISTA COMPLETA */}
+        {/* LISTA */}
         <div className="mt-8">
           <h2 className="text-2xl font-bold mb-4">
             Camadas registradas
