@@ -8,6 +8,7 @@ import {
   getDocs,
   doc,
   deleteDoc,
+  updateDoc,
 } from "firebase/firestore";
 
 export default function Home() {
@@ -15,6 +16,15 @@ export default function Home() {
   const [corral, setCorral] = useState("");
   const [cantidad, setCantidad] = useState("");
   const [camadas, setCamadas] = useState<any[]>([]);
+
+  // ✏️ editar
+  const [editando, setEditando] = useState<any | null>(null);
+  const [editCorral, setEditCorral] = useState("");
+  const [editCantidad, setEditCantidad] = useState("");
+  const [editFecha, setEditFecha] = useState("");
+
+  // 📅 HOY (LOCAL, NO UTC)
+  const hoy = new Date().toLocaleDateString("en-CA");
 
   // 🔄 obtener datos
   const obtenerCamadas = async () => {
@@ -36,13 +46,13 @@ export default function Home() {
     obtenerCamadas();
   }, []);
 
-  // 💾 guardar camada (FUENTE ÚNICA DE VERDAD)
+  // 💾 guardar
   const guardarCamada = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
       await addDoc(collection(db, "camadas"), {
-        fechaNacimiento: fecha, // único campo necesario
+        fechaNacimiento: fecha,
         corral,
         cantidad: Number(cantidad),
         createdAt: new Date().toISOString(),
@@ -70,21 +80,20 @@ export default function Home() {
     }
   };
 
-  // 🧠 edad automática
+  // 🧠 edad
   const calcularEdad = (fechaNacimiento: string) => {
-    const hoy = new Date();
+    const hoyDate = new Date();
     const nacimiento = new Date(fechaNacimiento);
 
-    const diffMs = hoy.getTime() - nacimiento.getTime();
+    const diffMs = hoyDate.getTime() - nacimiento.getTime();
     const dias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     const semanas = Math.floor(dias / 7);
 
     return { dias, semanas };
   };
 
-  // 📍 HOY ROBUSTO (SIN DEPENDER DE CAMPOS EXTRA)
+  // 📍 HOY
   const esHoy = (fechaNacimiento: string) => {
-    const hoy = new Date().toLocaleDateString("en-CA");
     return fechaNacimiento === hoy;
   };
 
@@ -99,47 +108,73 @@ export default function Home() {
     esHoy(c.fechaNacimiento)
   ).length;
 
+  // ✏️ editar abrir
+  const abrirEdicion = (camada: any) => {
+    setEditando(camada);
+    setEditCorral(camada.corral);
+    setEditCantidad(camada.cantidad);
+    setEditFecha(camada.fechaNacimiento);
+  };
+
+  // 💾 guardar edición
+  const guardarEdicion = async () => {
+    if (!editando) return;
+
+    try {
+      const ref = doc(db, "camadas", editando.id);
+
+      await updateDoc(ref, {
+        corral: editCorral,
+        cantidad: Number(editCantidad),
+        fechaNacimiento: editFecha,
+      });
+
+      setEditando(null);
+      obtenerCamadas();
+    } catch (error) {
+      console.error(error);
+      alert("Error al actualizar");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gray-400 p-6 text-black">
       <div className="max-w-2xl mx-auto bg-white p-6 rounded-2xl shadow-xl border border-gray-300">
 
-        {/* HEADER */}
         <h1 className="text-4xl font-bold mb-2">
           🐷 Granja Topoyanes
         </h1>
 
-        <p className="mb-4 text-gray-900">
-          Sistema de control porcino
-        </p>
+        <p className="mb-4">Sistema de control porcino</p>
 
         {/* 📊 DASHBOARD */}
         <div className="grid grid-cols-3 gap-3 mb-6">
 
           <div className="bg-gray-100 p-3 rounded-xl text-center">
-            <p className="text-sm">Camadas</p>
+            <p>Camadas</p>
             <p className="text-xl font-bold">{totalCamadas}</p>
           </div>
 
           <div className="bg-gray-100 p-3 rounded-xl text-center">
-            <p className="text-sm">Cerdos</p>
+            <p>Cerdos</p>
             <p className="text-xl font-bold">{totalCerdos}</p>
           </div>
 
           <div className="bg-gray-100 p-3 rounded-xl text-center">
-            <p className="text-sm">Hoy</p>
+            <p>Hoy</p>
             <p className="text-xl font-bold">{camadasHoy}</p>
           </div>
 
         </div>
 
-        {/* FORMULARIO */}
+        {/* FORM */}
         <form onSubmit={guardarCamada} className="space-y-4">
 
           <input
             type="date"
             value={fecha}
             onChange={(e) => setFecha(e.target.value)}
-            className="w-full border rounded-xl p-3"
+            className="w-full border p-2"
           />
 
           <input
@@ -147,7 +182,7 @@ export default function Home() {
             placeholder="Corral"
             value={corral}
             onChange={(e) => setCorral(e.target.value)}
-            className="w-full border rounded-xl p-3"
+            className="w-full border p-2"
           />
 
           <input
@@ -155,50 +190,90 @@ export default function Home() {
             placeholder="Cantidad"
             value={cantidad}
             onChange={(e) => setCantidad(e.target.value)}
-            className="w-full border rounded-xl p-3"
+            className="w-full border p-2"
           />
 
-          <button
-            type="submit"
-            className="w-full bg-black text-white p-3 rounded-xl"
-          >
-            Guardar camada
+          <button className="w-full bg-black text-white p-3 rounded-xl">
+            Guardar
           </button>
         </form>
 
+        {/* EDITAR */}
+        {editando && (
+          <div className="mt-6 p-4 bg-yellow-50 border rounded-xl">
+            <h2 className="font-bold mb-2">✏️ Editar camada</h2>
+
+            <input
+              value={editCorral}
+              onChange={(e) => setEditCorral(e.target.value)}
+              className="w-full border p-2 mb-2"
+              placeholder="Corral"
+            />
+
+            <input
+              type="number"
+              value={editCantidad}
+              onChange={(e) => setEditCantidad(e.target.value)}
+              className="w-full border p-2 mb-2"
+            />
+
+            <input
+              type="date"
+              value={editFecha}
+              onChange={(e) => setEditFecha(e.target.value)}
+              className="w-full border p-2 mb-2"
+            />
+
+            <div className="flex gap-2">
+              <button
+                onClick={guardarEdicion}
+                className="bg-green-600 text-white px-4 py-2 rounded"
+              >
+                Guardar
+              </button>
+
+              <button
+                onClick={() => setEditando(null)}
+                className="bg-gray-400 text-white px-4 py-2 rounded"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* LISTA */}
         <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">
+          <h2 className="text-xl font-bold mb-4">
             Camadas registradas
           </h2>
 
-          <div className="space-y-3">
-            {camadas.map((camada) => {
-              const edad = calcularEdad(camada.fechaNacimiento);
+          {camadas.map((c) => {
+            const edad = calcularEdad(c.fechaNacimiento);
 
-              return (
-                <div
-                  key={camada.id}
-                  className="border rounded-xl p-4 bg-gray-50"
+            return (
+              <div key={c.id} className="border p-3 rounded mb-2">
+
+                <p>🐷 {c.corral} - {c.cantidad}</p>
+                <p>{c.fechaNacimiento}</p>
+                <p>{edad.dias} días</p>
+
+                <button
+                  onClick={() => abrirEdicion(c)}
+                  className="bg-blue-500 text-white px-3 py-1 rounded mr-2"
                 >
-                  <p><strong>Corral:</strong> {camada.corral}</p>
-                  <p><strong>Cantidad:</strong> {camada.cantidad}</p>
-                  <p><strong>Fecha:</strong> {camada.fechaNacimiento}</p>
+                  Editar
+                </button>
 
-                  <p>
-                    <strong>Edad:</strong> {edad.dias} días ({edad.semanas} semanas)
-                  </p>
-
-                  <button
-                    onClick={() => eliminarCamada(camada.id)}
-                    className="mt-2 bg-red-500 text-white px-3 py-1 rounded-lg"
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+                <button
+                  onClick={() => eliminarCamada(c.id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded"
+                >
+                  Eliminar
+                </button>
+              </div>
+            );
+          })}
         </div>
 
       </div>
