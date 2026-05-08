@@ -152,6 +152,7 @@ export default function Home() {
 
           <input
             type="date"
+            placeholder="Fecha de nacimiento"
             value={fecha}
             onChange={(e) => setFecha(e.target.value)}
             className="w-full border rounded-xl p-3"
