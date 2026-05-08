@@ -84,7 +84,7 @@ export default function Home() {
 
   // 📍 HOY ROBUSTO (SIN DEPENDER DE CAMPOS EXTRA)
   const esHoy = (fechaNacimiento: string) => {
-    const hoy = new Date().toISOString().split("T")[0];
+    const hoy = new Date().toLocaleDateString("en-CA");
     return fechaNacimiento === hoy;
   };
 
