@@ -16,9 +16,6 @@ export default function Home() {
   const [cantidad, setCantidad] = useState("");
   const [camadas, setCamadas] = useState<any[]>([]);
 
-  // 📅 llave del día actual
-  const hoyKey = new Date().toISOString().split("T")[0];
-
   // 🔄 obtener datos
   const obtenerCamadas = async () => {
     const querySnapshot = await getDocs(collection(db, "camadas"));
@@ -39,14 +36,13 @@ export default function Home() {
     obtenerCamadas();
   }, []);
 
-  // 💾 guardar
+  // 💾 guardar camada (FUENTE ÚNICA DE VERDAD)
   const guardarCamada = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
       await addDoc(collection(db, "camadas"), {
-        fechaNacimiento: fecha,
-        fechaKey: new Date(fecha).toISOString().split("T")[0],
+        fechaNacimiento: fecha, // único campo necesario
         corral,
         cantidad: Number(cantidad),
         createdAt: new Date().toISOString(),
@@ -86,22 +82,28 @@ export default function Home() {
     return { dias, semanas };
   };
 
-  // 📊 CONTADOR HOY
-  const camadasHoy = camadas.filter(
-    (c) => c.fechaKey === hoyKey
-  ).length;
+  // 📍 HOY ROBUSTO (SIN DEPENDER DE CAMPOS EXTRA)
+  const esHoy = (fechaNacimiento: string) => {
+    const hoy = new Date().toISOString().split("T")[0];
+    return fechaNacimiento === hoy;
+  };
 
+  // 📊 DASHBOARD
   const totalCamadas = camadas.length;
 
   const totalCerdos = camadas.reduce((acc, c) => {
     return acc + Number(c.cantidad || 0);
   }, 0);
 
+  const camadasHoy = camadas.filter((c) =>
+    esHoy(c.fechaNacimiento)
+  ).length;
+
   return (
     <main className="min-h-screen bg-gray-400 p-6 text-black">
       <div className="max-w-2xl mx-auto bg-white p-6 rounded-2xl shadow-xl border border-gray-300">
 
-        {/* TÍTULO */}
+        {/* HEADER */}
         <h1 className="text-4xl font-bold mb-2">
           🐷 Granja Topoyanes
         </h1>
