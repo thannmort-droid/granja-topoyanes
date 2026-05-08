@@ -16,6 +16,7 @@ export default function Home() {
   const [cantidad, setCantidad] = useState("");
   const [camadas, setCamadas] = useState<any[]>([]);
 
+  // 🔄 obtener datos
   const obtenerCamadas = async () => {
     const querySnapshot = await getDocs(collection(db, "camadas"));
 
@@ -35,6 +36,7 @@ export default function Home() {
     obtenerCamadas();
   }, []);
 
+  // 💾 guardar
   const guardarCamada = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -43,10 +45,8 @@ export default function Home() {
         fechaNacimiento: fecha,
         corral,
         cantidad: Number(cantidad),
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(),
       });
-
-      alert("🐷 Camada guardada");
 
       setFecha("");
       setCorral("");
@@ -59,17 +59,18 @@ export default function Home() {
     }
   };
 
+  // 🗑 eliminar
   const eliminarCamada = async (id: string) => {
     try {
       await deleteDoc(doc(db, "camadas", id));
       obtenerCamadas();
     } catch (error) {
       console.error(error);
-      alert("Error al eliminar la camada");
+      alert("Error al eliminar");
     }
   };
 
-  // 🧠 EDAD AUTOMÁTICA
+  // 🧠 edad automática
   const calcularEdad = (fechaNacimiento: string) => {
     const hoy = new Date();
     const nacimiento = new Date(fechaNacimiento);
@@ -79,6 +80,27 @@ export default function Home() {
     const semanas = Math.floor(dias / 7);
 
     return { dias, semanas };
+  };
+
+  // 📍 FIX REAL Y ROBUSTO PARA HOY
+  const esHoy = (fechaNacimiento: any) => {
+    const hoy = new Date().toISOString().split("T")[0];
+
+    // si es string tipo "YYYY-MM-DD"
+    if (typeof fechaNacimiento === "string") {
+      return fechaNacimiento === hoy;
+    }
+
+    // si es Timestamp de Firebase
+    if (fechaNacimiento?.seconds) {
+      const fecha = new Date(fechaNacimiento.seconds * 1000)
+        .toISOString()
+        .split("T")[0];
+
+      return fecha === hoy;
+    }
+
+    return false;
   };
 
   return (
@@ -96,46 +118,28 @@ export default function Home() {
         {/* FORMULARIO */}
         <form onSubmit={guardarCamada} className="space-y-4">
 
-          <div>
-            <label className="block mb-1 font-medium">
-              Fecha de nacimiento
-            </label>
+          <input
+            type="date"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            className="w-full border rounded-xl p-3"
+          />
 
-            <input
-              type="date"
-              value={fecha}
-              onChange={(e) => setFecha(e.target.value)}
-              className="w-full border rounded-xl p-3"
-            />
-          </div>
+          <input
+            type="text"
+            placeholder="Corral"
+            value={corral}
+            onChange={(e) => setCorral(e.target.value)}
+            className="w-full border rounded-xl p-3"
+          />
 
-          <div>
-            <label className="block mb-1 font-medium">
-              Corral
-            </label>
-
-            <input
-              type="text"
-              placeholder="Ejemplo: Corral 3"
-              value={corral}
-              onChange={(e) => setCorral(e.target.value)}
-              className="w-full border rounded-xl p-3"
-            />
-          </div>
-
-          <div>
-            <label className="block mb-1 font-medium">
-              Cantidad de cerdos
-            </label>
-
-            <input
-              type="number"
-              placeholder="10"
-              value={cantidad}
-              onChange={(e) => setCantidad(e.target.value)}
-              className="w-full border rounded-xl p-3"
-            />
-          </div>
+          <input
+            type="number"
+            placeholder="Cantidad"
+            value={cantidad}
+            onChange={(e) => setCantidad(e.target.value)}
+            className="w-full border rounded-xl p-3"
+          />
 
           <button
             type="submit"
@@ -145,7 +149,24 @@ export default function Home() {
           </button>
         </form>
 
-        {/* LISTA */}
+        {/* 📍 PANEL HOY */}
+        <div className="mt-6 p-4 border rounded-xl bg-green-50">
+          <h2 className="text-xl font-bold mb-2">📍 Panel HOY</h2>
+
+          {camadas.filter((c) => esHoy(c.fechaNacimiento)).length === 0 ? (
+            <p>😴 Hoy no hay camadas registradas</p>
+          ) : (
+            camadas
+              .filter((c) => esHoy(c.fechaNacimiento))
+              .map((c) => (
+                <div key={c.id}>
+                  🐷 Corral {c.corral} - {c.cantidad} cerdos
+                </div>
+              ))
+          )}
+        </div>
+
+        {/* LISTA COMPLETA */}
         <div className="mt-8">
           <h2 className="text-2xl font-bold mb-4">
             Camadas registradas
